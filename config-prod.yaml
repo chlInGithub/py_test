@@ -1,0 +1,5 @@
+database:
+  host: prodserver
+  port: 3306
+  user: prod_user
+  password: prod_password
