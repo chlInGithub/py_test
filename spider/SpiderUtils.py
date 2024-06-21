@@ -6,6 +6,8 @@ import pymysql
 import pyperclip
 import redis
 
+from properties import RedisProperties, DBProperties
+
 
 def get_ip_address():
     try:
@@ -31,19 +33,19 @@ def paste_text(text):
 def connect_to_database():
     """连接到数据库"""
     return pymysql.connect(
-        host='xxx',
-        port=3306,
-        user='xxx',
-        password='xxx',
-        database='xxx',
+        host=DBProperties.host,
+        port=DBProperties.port,
+        user=DBProperties.user,
+        password=DBProperties.password,
+        database=DBProperties.database,
         charset='utf8',
         cursorclass=pymysql.cursors.DictCursor
     )
 
 
 def gen_redis():
-    return redis.Redis(host='xxx', port=6379,
-                       password='xxx', db=8)
+    return redis.Redis(host=RedisProperties.host, port=RedisProperties.port,
+                       password=RedisProperties.password, db=RedisProperties.db)
 
 
 def calculate_wait_seconds():

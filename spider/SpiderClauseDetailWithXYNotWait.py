@@ -6,6 +6,7 @@ import traceback
 import pyautogui
 
 import SpiderUtils
+from properties import SpiderProperties
 
 
 class DBException(Exception):
@@ -34,20 +35,29 @@ def spider():
     task_ip_date_counter_key = 'spider:task_ip_date_counter'
     task_clause_list_item_count_key = 'spider:task_clause_list_item_count'
     task_clause_list_item_has_tags_key = 'spider:task_clause_list_item_has_tags'
+    task_ip_current_cid_key = 'spider:task_ip_current_cid'
+    task_ip_done_key = 'spider:task_ip_detail_done'
     ip_address = SpiderUtils.get_ip_address()
+    today_str = datetime.datetime.now().strftime("%Y%m%d")
     max_count = 300
     has_res_error = 0
     res_error = ''
     res_error_count = 0
+
+    if r.hexists(task_ip_done_key, f"{today_str}:{ip_address}") == True:
+        print("今日detail已处理")
+        return
+
     while True:
-        today_str = datetime.datetime.now().strftime("%Y%m%d")
+
         temp_hour = datetime.datetime.now().hour
         if temp_hour < 9 or temp_hour > 21:
             print(f'{today_str} 不在9-21点之间，等待30分钟')
             time.sleep(60 * 30)
 
-        field_search = f"{ip_address}_{today_str}_clauseSearch"
-        field_detail = f"{ip_address}_{today_str}_clauseDetailByPerson"
+        field_search = f"clauseSearch:{today_str}:{ip_address}"
+        field_detail = f"clauseDetailByPerson:{today_str}:{ip_address}"
+        field_current_cid = f"{today_str}:{ip_address}"
         ip_date_count = r.hget(task_ip_date_counter_key, field_detail)
         if ip_date_count is not None and int(ip_date_count) > max_count:
             # 等待知道第二天0点10分
@@ -79,6 +89,7 @@ def spider():
 
         try:
             if spider_task:
+                r.hset(task_ip_current_cid_key, field_current_cid, spider_task['clause_cid'])
                 task_type = spider_task['task_type']
                 if 'clauseDetailByPerson' == task_type:
                     params = spider_task['params']
@@ -94,7 +105,7 @@ def spider():
                         # 微信搜索框
                         pyautogui.click(587, 48)
                         time.sleep(1)
-                        SpiderUtils.paste_text('公众号名称')
+                        SpiderUtils.paste_text(SpiderProperties.jxxs_name)
                         time.sleep(2)
                         # 搜索结果
                         pyautogui.click(590, 119)
@@ -181,6 +192,8 @@ def spider():
         time.sleep(wait_seconds)
         print(f'{today_str} task deal wait done')
     print("结束条款详情")
+    r.hset(task_ip_done_key, f"{today_str}:{ip_address}", 1)
+
 
 if __name__ == '__main__':
     spider()
