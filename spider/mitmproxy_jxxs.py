@@ -468,8 +468,10 @@ class Writer:
                 data['data']['total'] = 1
                 total = 1
                 need_set_response = True
+            if len(temp) == 0:
+                print(f"0 filter current cid {current_cid}")
 
-        if total is not None and total > 0:
+        if total is not None and total == 1:
             self.redis.hset(task_clause_list_item_count_key, ip_address, total)
             self.redis.hset(task_clause_list_item_has_tags_key, ip_address, str(tags_length))
 

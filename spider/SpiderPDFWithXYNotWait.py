@@ -47,17 +47,17 @@ def spider():
     task_list_key = 'spider:task_id_list:clausePdfByPerson'
     task_ip_date_counter_key = 'spider:task_ip_date_counter'
     task_ip_current_cid_key = 'spider:task_ip_current_cid'
-    task_ip_done_key = 'spider:task_ip_pdf_done'
     task_clause_list_item_count_key = 'spider:task_clause_list_item_count'
     task_clause_list_item_has_tags_key = 'spider:task_clause_list_item_has_tags'
     ip_address = SpiderUtils.get_ip_address()
     today_str = datetime.datetime.now().strftime("%Y%m%d")
+    task_ip_done_key = f'spider:task_ip_pdf_done:{today_str}:{ip_address}'
     max_count = 300
     has_res_error = 0
     res_error = ''
     res_error_count = 0
 
-    if r.hexists(task_ip_done_key, f"{today_str}:{ip_address}") == True:
+    if r.exists(task_ip_done_key) is True:
         print("今日PDF已处理")
         return
     while True:
@@ -66,10 +66,10 @@ def spider():
             print(f'{today_str} 不在9-21点之间，等待30分钟')
             time.sleep(60 * 30)
 
-        field_search = f"clauseSearch:{today_str}:{ip_address}"
-        field_pdf = f"clausePdfByPerson:{today_str}:{ip_address}"
+        field_search = f"{task_ip_date_counter_key}:clauseSearch:{today_str}:{ip_address}"
+        field_pdf = f"{task_ip_date_counter_key}:clausePdfByPerson:{today_str}:{ip_address}"
         field_current_cid = f"{today_str}:{ip_address}"
-        ip_date_count = r.hget(task_ip_date_counter_key, field_pdf)
+        ip_date_count = r.get(field_pdf)
         if ip_date_count is not None and int(ip_date_count) > max_count:
             # 等待到第二天0点10分
             print(f"{today_str} 今天次数已用完 等待到第二天 已使用{ip_date_count}")
@@ -145,7 +145,7 @@ def spider():
                             res_error_count = res_error_count + 1
                             raise Exception('has_res_error list')
 
-                        r.hincrby(task_ip_date_counter_key, field_search, 1)
+                        r.incrby(field_search, 1)
 
                         # 避免浪费次数
                         if 1 == test:
@@ -173,7 +173,7 @@ def spider():
                                     pyautogui.click(x, y + y_interval * i)
                                     time.sleep(5)
 
-                                    r.hincrby(task_ip_date_counter_key, field_pdf, 1)
+                                    r.incrby(field_pdf, 1)
 
                                     res_error = r.hget('spider:ip_error', ip_address)
                                     if res_error:
@@ -207,7 +207,7 @@ def spider():
         time.sleep(wait_seconds)
         print(f'{today_str} task deal wait done')
     print("结束pdf")
-    r.hset(task_ip_done_key, f"{today_str}:{ip_address}", 1)
+    r.set(task_ip_done_key, 1)
 
 
 if __name__ == '__main__':

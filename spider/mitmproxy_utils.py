@@ -47,8 +47,8 @@ class MitmproxyUtils:
             for i in range(0, 20):
                 try:
                     print(f'http response status {requests.get("http://www.baidu.com").status_code}')
-                except requests.exceptions.ProxyError:
-                    print('mitmproxy 还没有起来 或 检查端口是否一致')
+                except IOError as e:
+                    print(f'mitmproxy 还没有起来 或 检查端口是否一致 {e}')
                 output = log_file.readline()
                 if output == '' and process.poll() is not None:
                     break
